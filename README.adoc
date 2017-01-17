@@ -1,0 +1,72 @@
+== Jentrata - B2B Gateway
+
+=== Introduction
+Jentrata is an Open Standard based B2B Gateway that implements a number of messaging standards such as the AS4 Conformance Profile of the OASIS ebMS 3.0 specification.
+
+== Build Status
+
+Jentrata CI Build Status image:https://jentrata.ci.cloudbees.com/job/jentrata-ci/badge/icon[title="Jentrata CI Build Status", link="https://jentrata.ci.cloudbees.com/job/jentrata-ci/"]
+
+
+=== Getting Started
+TODO:
+
+=== Build from Source
+Requires maven 3.0+ and Java 7+
+
+Run the following
+[source,bash]
+----
+mvn clean install
+----
+This will create jentrata-<version>.tar.gz in jentrata/dist/assembly/target
+
+==== Running Jentrata
+Jentrata requires a minimum of Java 7+ please ensure your JAVA_HOME environment variable points to a valid JDK 1.7 distribution
+
+Download and unpack jentrata-<version>.tar.gz then run
+[source,bash]
+----
+cd jentrata-<version>/bin
+./jentrata
+----
+This will run Jentrata interactively you should now see the jentrata prompt
+[source,bash]
+----
+   ___            _             _              
+  |_  |          | |           | |             
+    | | ___ _ __ | |_ _ __ __ _| |_ __ _       
+    | |/ _ \ '_ \| __| '__/ _` | __/ _` |    
+/\__/ /  __/ | | | |_| | | (_| | || (_| |     
+\____/ \___|_| |_|\__|_|  \__,_|\__\__,_|
+
+  jentrata (2.0.0-SNAPSHOT)
+  http://jentrata.org
+
+Hit '<tab>' for a list of available commands
+and '[cmd] --help' for help on a specific command.
+Hit '<ctrl-d>' to shutdown jentrata.
+
+jentrata@jentrata> 
+----
+
+To verify Jentrata ebms AS4 bundles are running run the following command in the jentrata shell
+[source,bash]
+----
+jentrata@jentrata> list
+
+.....
+[ 184] [Active     ] [            ] [       ] [   50] camel-jetty (2.10.4)
+[ 185] [Active     ] [            ] [       ] [   80] wrap_mvn_org.apache.activemq_activemq-camel_5.8.0 (0)
+[ 186] [Active     ] [            ] [       ] [   80] Apache Commons IO Bundle (1.4)
+[ 187] [Active     ] [Created     ] [       ] [   80] Jentrata :: ebms3 - AS4 Conformance Profile (2.0.0.SNAPSHOT)
+----
+You should see that the *Jentrata ebms3 - AS4 Conformance Profile* bundle is in the Created state
+
+By default Jentrata exposes a single http endpoint http://localhost:8081/jentrata/ebms/inbound for ebMS AS4 support.
+
+
+=== License
+The Apache Software License, Version 2.0 - http://www.apache.org/licenses/LICENSE-2.0
+
+

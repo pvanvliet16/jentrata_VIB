@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.0.0"
+           xmlns:camel="http://camel.apache.org/schema/blueprint"
+           xsi:schemaLocation="
+             http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+           ">
+    <!-- blueprint property placeholders -->
+    <cm:property-placeholder persistent-id="org.jentrata.ebms.as4">
+        <cm:default-properties>
+            <cm:property name="activemq.broker.url" value="tcp://localhost:61616"/>
+            <cm:property name="activemq.broker.username" value="jentrata"/>
+            <cm:property name="activemq.broker.password" value="jentrata"/>
+            <cm:property name="activemq.broker.maxConnections" value="20"/>
+            <cm:property name="activemq.broker.concurrentConsumers" value="5"/>
+            <!-- idleTimeout=0 disables ActiveMQMessageConsumer.checkClosed() logic -->
+            <cm:property name="activemq.broker.idleTimeout" value="0"/>
+
+            <cm:property name="jentrata.ebms.dlq" value=""/>
+
+            <cm:property name="jentrata.trace.enabled" value="false"/>
+
+            <cm:property name="jentrata.ebms.inbound.httpPort" value="8081"/>
+            <cm:property name="jentrata.ebms.inbound.httpHost" value="0.0.0.0"/>
+            <cm:property name="jentrata.ebms.inbound.endpoint" value="jetty:http://${jentrata.ebms.inbound.httpHost}:${jentrata.ebms.inbound.httpPort}/jentrata/ebms/inbound"/>
+            <cm:property name="jentrata.ebms.inbound.queue" value="activemq:queue:jentrata_internal_ebms_inbound"/>
+            <cm:property name="jentrata.ebms.outbound.queue" value="activemq:queue:jentrata_internal_ebms_outbound"/>
+
+            <cm:property name="jentrata.ebms.outbound.http.proxyHost" value=""/>
+            <cm:property name="jentrata.ebms.outbound.http.proxyPort" value=""/>
+            <cm:property name="jentrata.ebms.outbound.http.httpClientOverride" value=""/>
+
+            <cm:property name="jentrata.ebms.outbound.dir" value="./data/jentrata/outbox"/>
+            <cm:property name="jentrata.ebms.outbound.cpaId" value="jentrataLoopback"/>
+            <cm:property name="jentrata.ebms.outbound.service" value="http://docs.oasis-open.org/ebxml-msg/as4/200902/service"/>
+            <cm:property name="jentrata.ebms.outbound.action" value="http://docs.oasis-open.org/ebxml-msg/as4/200902/action"/>
+            <cm:property name="jentrata.ebms.outbound.contentType" value="text/xml"/>
+            <cm:property name="jentrata.ebms.outbound.payloadId" value="payload-id@jentrata.org"/>
+            <cm:property name="jentrata.ebms.outbound.from" value="123456789"/>
+            <cm:property name="jentrata.ebms.outbound.fromPartyIdType" value="urn:oasis:names:tc:ebcore:partyid-type:iso6523:0088"/>
+            <cm:property name="jentrata.ebms.outbound.to" value="987654321"/>
+            <cm:property name="jentrata.ebms.outbound.toPartyIdType" value="urn:oasis:names:tc:ebcore:partyid-type:iso6523:0088"/>
+            <cm:property name="jentrata.ebms.outbound.agreementRef" value=""/>
+            <cm:property name="jentrata.ebms.outbound.schema" value=""/>
+            <cm:property name="jentrata.ebms.outbound.partProperties" value=""/>
+            <cm:property name="jentrata.ebms.outbound.conversationId" value=""/>
+            <cm:property name="jentrata.ebms.outbound.messageId" value=""/>
+            <cm:property name="jentrata.ebms.outbound.defaultCPAId" value=""/>
+
+            <cm:property name="jentrata.ebms.security.keystore.file" value="etc/keys/jentrata.jks"/>
+            <cm:property name="jentrata.ebms.security.keystore.type" value="jks"/>
+            <cm:property name="jentrata.ebms.security.keystore.alias" value="jentrata"/>
+            <cm:property name="jentrata.ebms.security.keystore.password" value="security"/>
+
+        </cm:default-properties>
+    </cm:property-placeholder>
+
+    <reference id="messageStore" interface="org.jentrata.ebms.messaging.MessageStore"/>
+    <reference id="cpaRepository" interface="org.jentrata.ebms.cpa.CPARepository"/>
+
+    <bean id="messageDetector" class="org.jentrata.ebms.internal.messaging.MessageDetector"/>
+
+    <bean id="payloadProcessor" class="org.jentrata.ebms.internal.messaging.PartPropertiesPayloadProcessor"/>
+
+    <bean id="uuidGenerator" class="org.jentrata.ebms.messaging.UUIDGenerator"/>
+
+    <bean id="messageStoreRouteBuilder" class="org.jentrata.ebms.as4.internal.routes.MessageStoreRouteBuilder">
+        <property name="messageStore" ref="messageStore"/>
+    </bean>
+
+    <bean id="validatePartnerAgreementRouteBuilder" class="org.jentrata.ebms.as4.internal.routes.ValidatePartnerAgreementRouteBuilder"/>
+
+    <bean id="crypto" class="org.apache.wss4j.common.crypto.Merlin">
+        <argument>
+            <props>
+                <prop key="org.apache.ws.security.crypto.provider" value="org.apache.ws.security.components.crypto.Merlin"/>
+                <prop key="org.apache.ws.security.crypto.merlin.keystore.type" value="${jentrata.ebms.security.keystore.type}"/>
+                <prop key="org.apache.ws.security.crypto.merlin.keystore.password" value="${jentrata.ebms.security.keystore.password}"/>
+                <prop key="org.apache.ws.security.crypto.merlin.keystore.alias" value="${jentrata.ebms.security.keystore.alias}"/>
+                <prop key="org.apache.ws.security.crypto.merlin.keystore.file" value="${jentrata.ebms.security.keystore.file}"/>
+            </props>
+        </argument>
+    </bean>
+
+    <bean id="wsseRouteBuilder" class="org.jentrata.ebms.as4.internal.routes.WSSERouteBuilder">
+        <property name="crypto" ref="crypto"/>
+    </bean>
+
+    <bean id="xmlSchemaValidator" class="org.jentrata.ebms.messaging.XmlSchemaValidator">
+        <property name="schemaFile" value="etc/schemas/ebms3/ebms-header-3_0-200704.xsd"/>
+    </bean>
+
+    <bean id="ebmsInboundRouteBuilder" class="org.jentrata.ebms.as4.internal.routes.EbMS3InboundRouteBuilder">
+        <property name="ebmsHttpEndpoint" value="${jentrata.ebms.inbound.endpoint}"/>
+        <property name="inboundEbmsQueue" value="${jentrata.ebms.inbound.queue}"/>
+        <property name="ebmsDLQ" value="${jentrata.ebms.dlq}"/>
+        <property name="messageDetector" ref="messageDetector"/>
+        <property name="payloadProcessor" ref="payloadProcessor"/>
+        <property name="xmlSchemaValidator" ref="xmlSchemaValidator"/>
+    </bean>
+
+    <bean id="ebmsSignalMessageRouteBuilder" class="org.jentrata.ebms.as4.internal.routes.EbmsSignalMessageRouteBuilder"/>
+
+    <bean id="ebmsOutboundRouteBuilder" class="org.jentrata.ebms.as4.internal.routes.EbmsOutboundRouteBuilder">
+        <property name="outboundEbmsQueue" value="${jentrata.ebms.outbound.queue}"/>
+        <property name="cpaRepository" ref="cpaRepository"/>
+        <property name="httpProxyHost" value="${jentrata.ebms.outbound.http.proxyHost}"/>
+        <property name="httpProxyPort" value="${jentrata.ebms.outbound.http.proxyPort}"/>
+        <property name="httpClientOverride" value="${jentrata.ebms.outbound.http.httpClientOverride}"/>
+    </bean>
+
+    <bean id="ebmsOutboundMessageRouteBuilder" class="org.jentrata.ebms.as4.internal.routes.EbmsOutboundMessageRouteBuilder">
+        <property name="defaultCPAId" value="${jentrata.ebms.outbound.defaultCPAId}"/>
+    </bean>
+
+    <bean id="ebmsErrorHandlerRouteBuilder"  class="org.jentrata.ebms.as4.internal.routes.EbmsErrorHandlerRouteBuilder"/>
+
+    <bean id="ebmsSignalMessageHandlerRouteBuilder" class="org.jentrata.ebms.as4.internal.routes.EbmsSignalMessageHandlerRouteBuilder"/>
+
+    <bean id="eventNotificationRouteBuilder" class="org.jentrata.ebms.as4.internal.routes.EventNotificationRouteBuilder"/>
+
+    <bean id="fileOutboundMessageRouter" class="org.jentrata.ebms.as4.internal.routes.FileOutboundMessageRouter">
+        <property name="fileEndpoint" value="file://${jentrata.ebms.outbound.dir}/?move=.sent&amp;moveFailed=.failed&amp;antInclude=*.xml"/>
+        <property name="cpaId" value="${jentrata.ebms.outbound.cpaId}"/>
+        <property name="service" value="${jentrata.ebms.outbound.service}"/>
+        <property name="action" value="${jentrata.ebms.outbound.action}"/>
+        <property name="contentType" value="${jentrata.ebms.outbound.contentType}"/>
+        <property name="payloadId" value="${jentrata.ebms.outbound.payloadId}"/>
+        <property name="from" value="${jentrata.ebms.outbound.from}"/>
+        <property name="fromPartyIdType" value="${jentrata.ebms.outbound.fromPartyIdType}"/>
+        <property name="to" value="${jentrata.ebms.outbound.to}"/>
+        <property name="toPartyIdType" value="${jentrata.ebms.outbound.toPartyIdType}"/>
+        <property name="agreementRef" value="${jentrata.ebms.outbound.agreementRef}"/>
+        <property name="schema" value="${jentrata.ebms.outbound.schema}"/>
+        <property name="partProperties" value="${jentrata.ebms.outbound.partProperties}"/>
+        <property name="conversationId" value="${jentrata.ebms.outbound.conversationId}"/>
+        <property name="messageId" value="${jentrata.ebms.outbound.messageId}"/>
+    </bean>
+
+    <bean id="jmsConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+        <property name="brokerURL" value="${activemq.broker.url}" />
+        <property name="userName" value="${activemq.broker.username}" />
+        <property name="password" value="${activemq.broker.password}" />
+    </bean>
+
+    <bean id="pooledConnectionFactory" class="org.apache.activemq.pool.PooledConnectionFactory" init-method="start" destroy-method="stop">
+        <property name="maxConnections" value="${activemq.broker.maxConnections}" />
+        <property name="connectionFactory" ref="jmsConnectionFactory" />
+        <property name="idleTimeout" value="${activemq.broker.idleTimeout}" />
+    </bean>
+
+    <bean id="jmsConfig" class="org.apache.camel.component.jms.JmsConfiguration">
+        <property name="connectionFactory" ref="pooledConnectionFactory"/>
+        <property name="concurrentConsumers" value="${activemq.broker.concurrentConsumers}"/>
+    </bean>
+
+    <bean id="activemq" class="org.apache.activemq.camel.component.ActiveMQComponent">
+        <property name="configuration" ref="jmsConfig"/>
+    </bean>
+
+    <camelContext id="jentrata-ebms" xmlns="http://camel.apache.org/schema/blueprint" trace="{{jentrata.trace.enabled}}">
+        <contextScan/>
+    </camelContext>
+
+</blueprint>

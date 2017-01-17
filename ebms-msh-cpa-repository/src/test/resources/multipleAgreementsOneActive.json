@@ -1,0 +1,16 @@
+[
+    {
+        "cpaId":"testCPAId1",
+        "active":"false",
+        "protocol": {
+            "address":"http://example.jentrata.org"
+        }
+    },
+    {
+        "cpaId":"testCPAId2",
+        "active":"true",
+        "protocol": {
+            "address":"http://example2.jentrata.org"
+        }
+    }
+]

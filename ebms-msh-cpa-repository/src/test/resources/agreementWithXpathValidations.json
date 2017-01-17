@@ -1,0 +1,24 @@
+[
+    {
+        "cpaId":"testCPAId1",
+        "active":"true",
+        "protocol": {
+            "address":"http://example.jentrata.org"
+        },
+        "businessInfo": {
+            "services" : [
+                {
+                    "service":"service1",
+                    "action":"action1",
+                    "validations": [
+                        {
+                            "type":"xpath",
+                            "name":"AgreementRef",
+                            "expression":"//eb3:AgreementRef[text()='http://agreement1234']"
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+]

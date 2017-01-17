@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+    <blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0"
+               xsi:schemaLocation="
+                 http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+               ">
+
+        <!-- blueprint property placeholders -->
+        <cm:property-placeholder persistent-id="org.jentrata.ebms.message.store.jdbc" update-strategy="reload">
+            <cm:default-properties>
+                <cm:property name="jentrata.messagestore.type" value="postgres"/>
+                <cm:property name="jentrata.messagestore.jdbc.driverClass" value="org.postgresql.Driver"/>
+                <cm:property name="jentrata.messagestore.jdbc.url" value="jdbc:postgresql://localhost/jentrata-message-store"/>
+                <cm:property name="jentrata.messagestore.jdbc.username" value="jentrata"/>
+                <cm:property name="jentrata.messagestore.jdbc.password" value="jentrata"/>
+                <cm:property name="jentrata.messagestore.autoCreateTables" value="true"/>
+
+                <!--Default connection pool settings -->
+                <cm:property name="jentrata.messagestore.jdbc.initialSize" value="0"/>
+                <cm:property name="jentrata.messagestore.jdbc.maxActive" value="10"/>
+                <cm:property name="jentrata.messagestore.jdbc.maxIdle" value="10"/>
+                <cm:property name="jentrata.messagestore.jdbc.minIdle" value="0"/>
+                <cm:property name="jentrata.messagestore.jdbc.maxWait" value="-1"/>
+
+                <cm:property name="jentrata.messagestore.jdbc.validationQuery" value=""/>
+                <cm:property name="jentrata.messagestore.jdbc.testOnBorrow" value="true"/>
+                <cm:property name="jentrata.messagestore.jdbc.testOnReturn" value="false"/>
+                <cm:property name="jentrata.messagestore.jdbc.testWhileIdle" value="false"/>
+                <cm:property name="jentrata.messagestore.jdbc.timeBetweenEvictionRunsMillis" value="-1"/>
+                <cm:property name="jentrata.messagestore.jdbc.numTestsPerEvictionRun" value="3"/>
+                <cm:property name="jentrata.messagestore.jdbc.minEvictableIdleTimeMillis" value="1800000"/>
+
+            </cm:default-properties>
+        </cm:property-placeholder>
+
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="${jentrata.messagestore.jdbc.driverClass}"/>
+        <property name="url" value="${jentrata.messagestore.jdbc.url}"/>
+        <property name="username" value="${jentrata.messagestore.jdbc.username}"/>
+        <property name="password" value="${jentrata.messagestore.jdbc.password}"/>
+        <property name="initialSize" value="${jentrata.messagestore.jdbc.initialSize}"/>
+        <property name="maxActive" value="${jentrata.messagestore.jdbc.maxActive}"/>
+        <property name="maxIdle" value="${jentrata.messagestore.jdbc.maxIdle}"/>
+        <property name="maxWait" value="${jentrata.messagestore.jdbc.maxWait}"/>
+        <property name="validationQuery" value="${jentrata.messagestore.jdbc.validationQuery}"/>
+        <property name="testOnBorrow" value="${jentrata.messagestore.jdbc.testOnBorrow}"/>
+        <property name="testWhileIdle" value="${jentrata.messagestore.jdbc.testWhileIdle}"/>
+        <property name="timeBetweenEvictionRunsMillis" value="${jentrata.messagestore.jdbc.timeBetweenEvictionRunsMillis}"/>
+        <property name="numTestsPerEvictionRun" value="${jentrata.messagestore.jdbc.numTestsPerEvictionRun}"/>
+        <property name="minEvictableIdleTimeMillis" value="${jentrata.messagestore.jdbc.minEvictableIdleTimeMillis}"/>
+    </bean>
+
+    <bean id="repositoryManagerFactory" class="org.jentrata.ebms.messaging.internal.sql.RepositoryManagerFactory">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="databaseType" value="${jentrata.messagestore.type}"/>
+    </bean>
+
+    <bean id="repositoryManager" factory-ref="repositoryManagerFactory" factory-method="createRepositoryManager" />
+
+    <bean id="uuidGenerator" class="org.jentrata.ebms.messaging.UUIDGenerator"/>
+
+    <bean id="messageStore" class="org.jentrata.ebms.messaging.internal.JDBCMessageStore" init-method="init">
+        <property name="repositoryManager" ref="repositoryManager"/>
+        <property name="createTables" value="${jentrata.messagestore.autoCreateTables}"/>
+        <property name="uuidGenerator" ref="uuidGenerator"/>
+    </bean>
+    <service ref="messageStore" interface="org.jentrata.ebms.messaging.MessageStore" ranking="5"/>
+
+</blueprint>

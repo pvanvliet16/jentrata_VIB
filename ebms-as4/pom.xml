@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (C) 2013, base2Services
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~  http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.jentrata</groupId>
+        <artifactId>jentrata-pom</artifactId>
+        <version>2.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>jentrata-ebms3-as4</artifactId>
+    <packaging>bundle</packaging>
+    <name>Jentrata :: ebms3 - AS4 Conformance Profile</name>
+    <description>Implementation of the ebMS 3.0 AS4 Conformance profile version 1.0</description>
+
+    <properties>
+        <osgi.private>org.jentrata.ebms.*</osgi.private>
+        <osgi.import>
+            org.apache.xml.security.*;version="${xmlsec.version}",
+            org.apache.xml.security.utils;version="${xmlsec.version}",
+            org.apache.xml.security.resource;version="${xmlsec.version}",
+            org.apache.wss4j.common.*;version="${wss4j.version}",
+            org.apache.wss4j.dom.*;version="${wss4j.version}",
+            org.jentrata.ebms;version=${project.version},
+            org.jentrata.ebms.messaging;version=${project.version},
+            org.jentrata.ebms.cpa;version=${project.version},
+            org.jentrata.ebms.cpa.pmode;version=${project.version},
+            org.jentrata.ebms.cpa.validation;version=${project.version},
+            org.jentrata.ebms.utils;version=${project.version},
+            *
+        </osgi.import>
+        <osgi.dynamic.import>*</osgi.dynamic.import>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.jentrata</groupId>
+            <artifactId>jentrata-ebms3-msh-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-blueprint</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-freemarker</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.wss4j</groupId>
+            <artifactId>wss4j-ws-security-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.wss4j</groupId>
+            <artifactId>wss4j-ws-security-dom</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+                <excludes>
+                    <exclude>META-INF/features.xml</exclude>
+                </excludes>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+                <includes>
+                    <include>META-INF/features.xml</include>
+                </includes>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-artifacts</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>attach-artifact</goal>
+                        </goals>
+                        <configuration>
+                            <artifacts>
+                                <artifact>
+                                    <file>${project.build.outputDirectory}/META-INF/features.xml</file>
+                                    <type>xml</type>
+                                    <classifier>features</classifier>
+                                </artifact>
+                                <artifact>
+                                    <file>${project.build.outputDirectory}/META-INF/org.jentrata.ebms.as4.cfg</file>
+                                    <type>cfg</type>
+                                </artifact>
+                            </artifacts>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+
+</project>
